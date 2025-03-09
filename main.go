@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"encoding/hex"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -17,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/exp/slices"
 )
@@ -33,6 +35,7 @@ func main() {
 	var suffix string
 	var workdir string
 	var skipSender bool
+	var jsonInput bool
 	flag.StringVar(&privateKey, "private-key", "", "Private key to use for signing")
 	flag.BoolVar(&ledger, "ledger", false, "Use ledger device for signing")
 	flag.IntVar(&index, "index", 0, "Index of the ledger to use")
@@ -44,6 +47,7 @@ func main() {
 	flag.StringVar(&suffix, "suffix", "^^^^^^^^", "String that suffixes the data to be signed")
 	flag.StringVar(&workdir, "workdir", ".", "Directory in which to run the subprocess")
 	flag.BoolVar(&skipSender, "skip-sender", false, "Skip adding the --sender flag to forge script commands")
+	flag.BoolVar(&jsonInput, "json", false, "Treat input as EIP-712 JSON payload")
 	flag.Parse()
 
 	options := 0
@@ -104,16 +108,35 @@ func main() {
 		input = input[:index]
 	}
 
-	fmt.Println()
-	hash := common.FromHex(strings.TrimSpace(string(input)))
-	if len(hash) != 66 {
-		log.Fatalf("Expected EIP-712 hex string with 66 bytes, got %d bytes, value: %s", len(input), string(input))
-	}
+	var hash []byte
+	if jsonInput {
+		// Process as EIP-712 JSON payload
+		var typedData apitypes.TypedData
+		if err := json.Unmarshal(input, &typedData); err != nil {
+			log.Fatalf("Error parsing EIP-712 JSON payload: %v", err)
+		}
 
-	domainHash := hash[2:34]
-	messageHash := hash[34:66]
-	fmt.Printf("Domain hash: 0x%s\n", hex.EncodeToString(domainHash))
-	fmt.Printf("Message hash: 0x%s\n", hex.EncodeToString(messageHash))
+		hash, _, err = apitypes.TypedDataAndHash(typedData)
+		if err != nil {
+			log.Fatalf("Error generating EIP-712 hash: %v", err)
+		}
+
+		domainSeparator, _ := typedData.HashStruct("EIP712Domain", typedData.Domain.Map())
+		messageHash, _ := typedData.HashStruct(typedData.PrimaryType, typedData.Message)
+		fmt.Printf("Domain hash: 0x%s\n", hex.EncodeToString(domainSeparator))
+		fmt.Printf("Message hash: 0x%s\n", hex.EncodeToString(messageHash))
+	} else {
+		// Process as already hashed hex string
+		hash = common.FromHex(strings.TrimSpace(string(input)))
+		if len(hash) != 66 {
+			log.Fatalf("Expected EIP-712 hex string with 66 bytes, got %d bytes. Add the --json flag to process unhashed payloads. Value: %s", len(hash), string(input))
+		}
+
+		domainHash := hash[2:34]
+		messageHash := hash[34:66]
+		fmt.Printf("Domain hash: 0x%s\n", hex.EncodeToString(domainHash))
+		fmt.Printf("Message hash: 0x%s\n", hex.EncodeToString(messageHash))
+	}
 
 	if signerErr != nil {
 		log.Fatalf("Error creating signer: %v", signerErr)
