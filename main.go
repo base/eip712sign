@@ -116,10 +116,12 @@ func main() {
 			log.Fatalf("Error parsing EIP-712 JSON payload: %v", err)
 		}
 
-		hash, _, err = apitypes.TypedDataAndHash(typedData)
+		_, rawData, err := apitypes.TypedDataAndHash(typedData)
 		if err != nil {
 			log.Fatalf("Error generating EIP-712 hash: %v", err)
 		}
+
+		hash = []byte(rawData)
 
 		domainSeparator, _ := typedData.HashStruct("EIP712Domain", typedData.Domain.Map())
 		messageHash, _ := typedData.HashStruct(typedData.PrimaryType, typedData.Message)
