@@ -24,6 +24,7 @@ import (
 func main() {
 	var privateKey string
 	var ledger bool
+	var trezor bool
 	var index int
 	var address bool
 	var mnemonic string
@@ -35,6 +36,7 @@ func main() {
 	var skipSender bool
 	flag.StringVar(&privateKey, "private-key", "", "Private key to use for signing")
 	flag.BoolVar(&ledger, "ledger", false, "Use ledger device for signing")
+	flag.BoolVar(&trezor, "trezor", false, "Use trezor device for signing")
 	flag.IntVar(&index, "index", 0, "Index of the ledger to use")
 	flag.BoolVar(&address, "address", false, "Print address of signer and exit")
 	flag.StringVar(&mnemonic, "mnemonic", "", "Mnemonic to use for signing")
@@ -53,16 +55,19 @@ func main() {
 	if ledger {
 		options++
 	}
+	if trezor {
+		options++
+	}
 	if mnemonic != "" {
 		options++
 	}
 	if options != 1 {
-		log.Fatalf("One (and only one) of --private-key, --ledger, --mnemonic must be set")
+		log.Fatalf("One (and only one) of --private-key, --ledger, --trezor, --mnemonic must be set")
 	}
 
 	// signer creation error is handled later, allowing the command that generates the signable
 	// data to run without a key / ledger, which is useful for simulation purposes
-	s, signerErr := createSigner(privateKey, mnemonic, hdPath, index)
+	s, signerErr := createSigner(privateKey, mnemonic, hdPath, index, ledger, trezor)
 	if signerErr != nil {
 		if address {
 			log.Fatalf("Error creating signer: %v", signerErr)
@@ -116,25 +121,28 @@ func main() {
 	fmt.Printf("Message hash: 0x%s\n", hex.EncodeToString(messageHash))
 
 	if signerErr != nil {
+		if address {
+			log.Fatalf("Error creating signer: %v", signerErr)
+		}
 		log.Fatalf("Error creating signer: %v", signerErr)
 	}
 
 	fmt.Printf("Signing as: %s\n\n", s.address().String())
 
-	if ledger {
-		fmt.Printf("Data sent to ledger, awaiting signature...")
+	if ledger || trezor {
+		fmt.Printf("Data sent to device, awaiting signature...")
 	}
 	signature, err := s.sign(hash)
 	if err == accounts.ErrWalletClosed {
 		// ledger is flaky sometimes, recreate and retry
 		fmt.Printf("failed with %s, retrying...", err.Error())
-		s, err = createSigner(privateKey, mnemonic, hdPath, index)
+		s, err = createSigner(privateKey, mnemonic, hdPath, index, ledger, trezor)
 		if err != nil {
 			log.Fatalf("Error creating signer: %v", err)
 		}
 		signature, err = s.sign(hash)
 	}
-	if ledger {
+	if ledger || trezor {
 		fmt.Println("done")
 	}
 	if err != nil {
@@ -158,7 +166,7 @@ func run(workdir, name string, args ...string) ([]byte, error) {
 	return buffer.Bytes(), err
 }
 
-func createSigner(privateKey, mnemonic, hdPath string, index int) (signer, error) {
+func createSigner(privateKey, mnemonic, hdPath string, index int, ledger, trezor bool) (signer, error) {
 	path, err := accounts.ParseDerivationPath(hdPath)
 	if err != nil {
 		return nil, err
@@ -180,27 +188,38 @@ func createSigner(privateKey, mnemonic, hdPath string, index int) (signer, error
 		return &ecdsaSigner{key}, nil
 	}
 
-	// assume using a ledger
-	ledgerHub, err := usbwallet.NewLedgerHub()
-	if err != nil {
-		return nil, fmt.Errorf("error starting ledger: %w", err)
+	// assume using a hardware wallet
+	var hub *usbwallet.Hub
+	if trezor {
+		hub, err = usbwallet.NewTrezorHubWithWebUSB()
+		if err != nil {
+			return nil, fmt.Errorf("error starting trezor: %w", err)
+		}
+	} else if ledger {
+		hub, err = usbwallet.NewLedgerHub()
+		if err != nil {
+			return nil, fmt.Errorf("error starting ledger: %w", err)
+		}
+	} else {
+		return nil, fmt.Errorf("no wallet type specified")
 	}
-	wallets := ledgerHub.Wallets()
+
+	wallets := hub.Wallets()
 	if len(wallets) == 0 {
-		return nil, fmt.Errorf("no ledgers found, please connect your ledger")
+		return nil, fmt.Errorf("no hardware wallets found, please connect your device")
 	} else if len(wallets) > 1 {
-		fmt.Printf("Found %d ledgers, using index %d\n", len(wallets), index)
+		fmt.Printf("Found %d devices, using index %d\n", len(wallets), index)
 	}
 	if index < 0 || index >= len(wallets) {
-		return nil, fmt.Errorf("ledger index out of range")
+		return nil, fmt.Errorf("device index out of range")
 	}
 	wallet := wallets[index]
 	if err := wallet.Open(""); err != nil {
-		return nil, fmt.Errorf("error opening ledger: %w", err)
+		return nil, fmt.Errorf("error opening device: %w", err)
 	}
 	account, err := wallet.Derive(path, true)
 	if err != nil {
-		return nil, fmt.Errorf("error deriving ledger account (please unlock and open the Ethereum app): %w", err)
+		return nil, fmt.Errorf("error deriving account (please unlock and open the Ethereum app): %w", err)
 	}
 	return &walletSigner{
 		wallet:  wallet,
