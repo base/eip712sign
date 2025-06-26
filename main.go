@@ -121,9 +121,6 @@ func main() {
 	fmt.Printf("Message hash: 0x%s\n", hex.EncodeToString(messageHash))
 
 	if signerErr != nil {
-		if address {
-			log.Fatalf("Error creating signer: %v", signerErr)
-		}
 		log.Fatalf("Error creating signer: %v", signerErr)
 	}
 
