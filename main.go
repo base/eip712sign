@@ -43,7 +43,7 @@ func main() {
 	flag.IntVar(&index, "index", 0, "Device index to use (if multiple devices are connected)")
 	flag.BoolVar(&address, "address", false, "Print address of signer and exit")
 	flag.StringVar(&mnemonic, "mnemonic", "", "Mnemonic to use for signing")
-	flag.StringVar(&hdPath, "hd-paths", "m/44'/60'/0'/0/0", "Hierarchical deterministic derivation path for mnemonic or ledger")
+	flag.StringVar(&hdPath, "hd-paths", "m/44'/60'/0'/0/0", "Hierarchical deterministic derivation path for mnemonic, ledger, or trezor")
 	flag.BoolVar(&text, "text", false, "Use EIP-191 message format for signing (default is EIP-712)")
 	flag.StringVar(&data, "data", "", "Data to be signed")
 	flag.StringVar(&prefix, "prefix", "vvvvvvvv", "String that prefixes the data to be signed")
@@ -70,7 +70,7 @@ func main() {
 	}
 
 	// signer creation error is handled later, allowing the command that generates the signable
-	// data to run without a key / ledger, which is useful for simulation purposes
+	// data to run without a key / ledger / trezor, which is useful for simulation purposes
 	s, signerErr := createSigner(privateKey, mnemonic, hdPath, index, ledger, trezor)
 	if signerErr != nil {
 		if address {
