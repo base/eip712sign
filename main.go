@@ -3,7 +3,8 @@ package main
 import (
 	"bytes"
 	"crypto/ecdsa"
-	"encoding/hex"
+	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -14,9 +15,10 @@ import (
 
 	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/signer/core/apitypes"
+	"github.com/mdehoog/usbwallet"
 	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/exp/slices"
 )
@@ -29,6 +31,7 @@ func main() {
 	var address bool
 	var mnemonic string
 	var hdPath string
+	var text bool
 	var data string
 	var prefix string
 	var suffix string
@@ -41,6 +44,7 @@ func main() {
 	flag.BoolVar(&address, "address", false, "Print address of signer and exit")
 	flag.StringVar(&mnemonic, "mnemonic", "", "Mnemonic to use for signing")
 	flag.StringVar(&hdPath, "hd-paths", "m/44'/60'/0'/0/0", "Hierarchical deterministic derivation path for mnemonic or ledger")
+	flag.BoolVar(&text, "text", false, "Use EIP-191 message format for signing (default is EIP-712)")
 	flag.StringVar(&data, "data", "", "Data to be signed")
 	flag.StringVar(&prefix, "prefix", "vvvvvvvv", "String that prefixes the data to be signed")
 	flag.StringVar(&suffix, "suffix", "^^^^^^^^", "String that suffixes the data to be signed")
@@ -101,24 +105,42 @@ func main() {
 		}
 		fmt.Printf("\n%s exited with code 0\n", flag.Arg(0))
 	}
+	fmt.Println()
 
-	if index := strings.Index(string(input), prefix); prefix != "" && index >= 0 {
+	if index := bytes.Index(input, []byte(prefix)); prefix != "" && index >= 0 {
 		input = input[index+len(prefix):]
 	}
-	if index := strings.Index(string(input), suffix); suffix != "" && index >= 0 {
+	if index := bytes.Index(input, []byte(suffix)); suffix != "" && index >= 0 {
 		input = input[:index]
 	}
+	input = bytes.TrimSpace(input)
 
-	fmt.Println()
-	hash := common.FromHex(strings.TrimSpace(string(input)))
-	if len(hash) != 66 {
-		log.Fatalf("Expected EIP-712 hex string with 66 bytes, got %d bytes, value: %s", len(input), string(input))
+	var typedData *apitypes.TypedData
+	if bytes.HasPrefix(input, []byte("0x")) {
+		input = common.FromHex(string(input))
+	}
+	if bytes.HasPrefix(input, []byte("{")) && !text {
+		typedData = new(apitypes.TypedData)
+		if err := json.Unmarshal(input, typedData); err != nil {
+			log.Fatalf("Error parsing typed data: %v", err)
+		}
+	}
+	if typedData == nil && !text && len(input) != 66 {
+		log.Fatalf("Expected EIP-712 hex string with 66 bytes, got %d bytes", len(input))
 	}
 
-	domainHash := hash[2:34]
-	messageHash := hash[34:66]
-	fmt.Printf("Domain hash: 0x%s\n", hex.EncodeToString(domainHash))
-	fmt.Printf("Message hash: 0x%s\n", hex.EncodeToString(messageHash))
+	hashes := input
+	if typedData != nil {
+		_, hashesStr, err := apitypes.TypedDataAndHash(*typedData)
+		if err != nil {
+			log.Fatalf("Error hashing typed data: %v", err)
+		}
+		hashes = []byte(hashesStr)
+	}
+	if len(hashes) == 66 {
+		fmt.Printf("Domain hash: 0x%x\n", hashes[2:34])
+		fmt.Printf("Message hash: 0x%x\n", hashes[34:66])
+	}
 
 	if signerErr != nil {
 		log.Fatalf("Error creating signer: %v", signerErr)
@@ -129,15 +151,24 @@ func main() {
 	if ledger || trezor {
 		fmt.Printf("Data sent to device, awaiting signature...")
 	}
-	signature, err := s.sign(hash)
-	if err == accounts.ErrWalletClosed {
+	sign := func() ([]byte, error) {
+		if text {
+			return s.signText(input)
+		}
+		if typedData != nil {
+			return s.signData(*typedData)
+		}
+		return s.signHash(input)
+	}
+	signature, err := sign()
+	if errors.Is(err, accounts.ErrWalletClosed) {
 		// ledger is flaky sometimes, recreate and retry
 		fmt.Printf("failed with %s, retrying...", err.Error())
 		s, err = createSigner(privateKey, mnemonic, hdPath, index, ledger, trezor)
 		if err != nil {
 			log.Fatalf("Error creating signer: %v", err)
 		}
-		signature, err = s.sign(hash)
+		signature, err = sign()
 	}
 	if ledger || trezor {
 		fmt.Println("done")
@@ -146,9 +177,13 @@ func main() {
 		log.Fatalf("Error signing data: %v", err)
 	}
 
-	fmt.Printf("\nData: 0x%s\n", hex.EncodeToString(hash))
+	fmt.Println()
+	if typedData != nil {
+		fmt.Printf("Typed: 0x%x\n", input)
+	}
+	fmt.Printf("Data: 0x%x\n", hashes)
 	fmt.Printf("Signer: %s\n", s.address().String())
-	fmt.Printf("Signature: %s\n", hex.EncodeToString(signature))
+	fmt.Printf("Signature: %x\n", signature)
 }
 
 func run(workdir, name string, args ...string) ([]byte, error) {
@@ -226,7 +261,9 @@ func createSigner(privateKey, mnemonic, hdPath string, index int, ledger, trezor
 
 type signer interface {
 	address() common.Address
-	sign([]byte) ([]byte, error)
+	signHash(data []byte) ([]byte, error)
+	signText(data []byte) ([]byte, error)
+	signData(data apitypes.TypedData) ([]byte, error)
 }
 
 type ecdsaSigner struct {
@@ -237,8 +274,24 @@ func (s *ecdsaSigner) address() common.Address {
 	return crypto.PubkeyToAddress(s.PublicKey)
 }
 
-func (s *ecdsaSigner) sign(data []byte) ([]byte, error) {
-	sig, err := crypto.Sign(crypto.Keccak256(data), s.PrivateKey)
+func (s *ecdsaSigner) signHash(data []byte) ([]byte, error) {
+	return s.sign(crypto.Keccak256(data))
+}
+
+func (s *ecdsaSigner) signText(data []byte) ([]byte, error) {
+	return s.sign(accounts.TextHash(data))
+}
+
+func (s *ecdsaSigner) signData(data apitypes.TypedData) ([]byte, error) {
+	hash, _, err := apitypes.TypedDataAndHash(data)
+	if err != nil {
+		return nil, err
+	}
+	return s.sign(hash)
+}
+
+func (s *ecdsaSigner) sign(hash []byte) ([]byte, error) {
+	sig, err := crypto.Sign(hash, s.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +300,7 @@ func (s *ecdsaSigner) sign(data []byte) ([]byte, error) {
 }
 
 type walletSigner struct {
-	wallet  accounts.Wallet
+	wallet  usbwallet.Wallet
 	account accounts.Account
 }
 
@@ -255,8 +308,16 @@ func (s *walletSigner) address() common.Address {
 	return s.account.Address
 }
 
-func (s *walletSigner) sign(data []byte) ([]byte, error) {
+func (s *walletSigner) signHash(data []byte) ([]byte, error) {
 	return s.wallet.SignData(s.account, accounts.MimetypeTypedData, data)
+}
+
+func (s *walletSigner) signText(data []byte) ([]byte, error) {
+	return s.wallet.SignText(s.account, data)
+}
+
+func (s *walletSigner) signData(data apitypes.TypedData) ([]byte, error) {
+	return s.wallet.SignTypedData(s.account, data)
 }
 
 func derivePrivateKey(mnemonic string, path accounts.DerivationPath) (*ecdsa.PrivateKey, error) {
