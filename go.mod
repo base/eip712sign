@@ -5,10 +5,10 @@ go 1.23.0
 toolchain go1.23.7
 
 require (
-	github.com/base/usbwallet v0.0.1
+	github.com/base/go-bip39 v1.1.0
+	github.com/base/usbwallet v0.0.2
 	github.com/decred/dcrd/hdkeychain/v3 v3.1.1
 	github.com/ethereum/go-ethereum v1.16.1
-	github.com/tyler-smith/go-bip39 v1.1.0
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
 )
 
