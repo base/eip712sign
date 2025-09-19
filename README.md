@@ -1,8 +1,9 @@
 # eip712sign
 
-Small golang utility used to sign EIP-712 hashes. Supports:
+Small golang utility used to sign EIP-712 typed data or hashes, and EIP-191 personal messages. Supports:
 
 - ledgers
+- trezors
 - mnemonics
 - raw private keys
 
@@ -37,8 +38,14 @@ go install github.com/base/eip712sign
 
 ```shell
 Usage of eip712sign:
+  -address
+    	Print address of signer and exit
+  -data string
+    	Data to be signed
   -hd-paths string
-    	Hierarchical deterministic derivation path for mnemonic or ledger (default "m/44'/60'/0'/0/0")
+    	Hierarchical deterministic derivation path for mnemonic, ledger, or trezor (default "m/44'/60'/0'/0/0")
+  -index int
+    	Device index to use (if multiple devices are connected)
   -ledger
     	Use ledger device for signing
   -mnemonic string
@@ -47,8 +54,14 @@ Usage of eip712sign:
     	String that prefixes the data to be signed (default "vvvvvvvv")
   -private-key string
     	Private key to use for signing
+  -skip-sender
+    	Skip adding the --sender flag to forge script commands
   -suffix string
     	String that suffixes the data to be signed (default "^^^^^^^^")
+  -text
+    	Use EIP-191 message format for signing (default is EIP-712)
+  -trezor
+    	Use trezor device for signing
   -workdir string
     	Directory in which to run the subprocess (default ".")
 ```
@@ -86,7 +99,7 @@ function printDataToSign(bytes memory data) internal pure {
 }
 ```
 
-...where `data` is 66 bytes in length.
+...where `data` is 66 bytes in length for EIP-712 hashes, or JSON for EIP-712 typed data (can optionally be hex encoded).
 
 Example output:
 

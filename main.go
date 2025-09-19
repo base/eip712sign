@@ -13,13 +13,13 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/base/go-bip39"
 	"github.com/base/usbwallet"
 	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	"github.com/tyler-smith/go-bip39"
 	"golang.org/x/exp/slices"
 )
 
