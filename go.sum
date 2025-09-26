@@ -6,8 +6,8 @@ github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 h1:w1UutsfOrms1J05zt7I
 github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412/go.mod h1:WPjqKcmVOxf0XSf3YxCJs6N6AOSrOx3obionmG7T0y0=
 github.com/base/go-bip39 v1.1.0 h1:ely6zK09KaQbfX8wpcmN4pRXy0SbbqMT2QF45P1BNh0=
 github.com/base/go-bip39 v1.1.0/go.mod h1:grZZXX8gYycovDC4cLS/RS0DmctofwHN+MUhedYCbO0=
-github.com/base/usbwallet v0.0.2 h1:3P2nlh083/zNZhPBNE4h8DBG/rqMZH4t8OaiCDnFydU=
-github.com/base/usbwallet v0.0.2/go.mod h1:s+bJu9pqzKwF0A/B1n8kjrNOpIsookUX8IUsw5v4VXI=
+github.com/base/usbwallet v0.1.0 h1:XnUUQ8QbjZlFwRujLYvEisRMJHDvHYLXVqtEl+CgyO0=
+github.com/base/usbwallet v0.1.0/go.mod h1:9ZDcr7QijjI7OHmjSCtbKZN/ZH4kzTN5BbIAm5H7qbc=
 github.com/bits-and-blooms/bitset v1.20.0 h1:2F+rfL86jE2d/bmw7OhqUg2Sj/1rURkBn3MdfoPyRVU=
 github.com/bits-and-blooms/bitset v1.20.0/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
@@ -62,12 +62,10 @@ github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb h1:PBC98N2aIaM3XXi
 github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEWrmP2Q=
 github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
 github.com/google/go-cmp v0.5.8/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/google/gousb v1.1.3 h1:xt6M5TDsGSZ+rlomz5Si5Hmd/Fvbmo2YCJHN+yGaK4o=
-github.com/google/gousb v1.1.3/go.mod h1:GGWUkK0gAXDzxhwrzetW592aOmkkqSGcj5KLEgmCVUg=
 github.com/holiman/uint256 v1.3.2 h1:a9EgMPSC1AAaj1SZL5zIQD3WbwTuHrMGOerLjGmM/TA=
 github.com/holiman/uint256 v1.3.2/go.mod h1:EOMSn4q6Nyt9P6efbI3bueV4e1b3dGlUCXeiRV4ng7E=
-github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52 h1:msKODTL1m0wigztaqILOtla9HeW1ciscYG4xjLtvk5I=
-github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52/go.mod h1:qk1sX/IBgppQNcGCRoj90u6EGC056EBoIc1oEjCWla8=
+github.com/karalabe/usb v0.0.3-0.20231219215548-8627268f6b0a h1:BGJeMa7efLsbPri2WJxtFOcjDPyjCdNlZWERE11GJAE=
+github.com/karalabe/usb v0.0.3-0.20231219215548-8627268f6b0a/go.mod h1:Od972xHfMJowv7NGVDiWVxk2zxnWgjLlJzE+F4F7AGU=
 github.com/klauspost/cpuid/v2 v2.2.5 h1:0E5MSMDEoAulmXNFquVs//DdoomxaoTY1kUhbc/qbZg=
 github.com/klauspost/cpuid/v2 v2.2.5/go.mod h1:Lcz8mBdAVJIBVzewtcLocK12l3Y+JytZYpaMropDUws=
 github.com/kylelemons/godebug v1.1.0 h1:RPNrshWIDI6G2gRW9EHilWtl7Z6Sb1BR0xunSBf0SNc=
