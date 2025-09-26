@@ -77,6 +77,10 @@ func main() {
 			log.Fatalf("Error creating signer: %v", signerErr)
 		}
 		log.Printf("Warning: signer creation failed: %v", signerErr)
+	} else {
+		defer func() {
+			_ = s.close()
+		}()
 	}
 
 	if address {
@@ -264,6 +268,7 @@ type signer interface {
 	signHash(data []byte) ([]byte, error)
 	signText(data []byte) ([]byte, error)
 	signData(data apitypes.TypedData) ([]byte, error)
+	close() error
 }
 
 type ecdsaSigner struct {
@@ -299,6 +304,10 @@ func (s *ecdsaSigner) sign(hash []byte) ([]byte, error) {
 	return sig, err
 }
 
+func (s *ecdsaSigner) close() error {
+	return nil
+}
+
 type walletSigner struct {
 	wallet  usbwallet.Wallet
 	account accounts.Account
@@ -318,6 +327,10 @@ func (s *walletSigner) signText(data []byte) ([]byte, error) {
 
 func (s *walletSigner) signData(data apitypes.TypedData) ([]byte, error) {
 	return s.wallet.SignTypedData(s.account, data)
+}
+
+func (s *walletSigner) close() error {
+	return s.wallet.Close()
 }
 
 func derivePrivateKey(mnemonic string, path accounts.DerivationPath) (*ecdsa.PrivateKey, error) {
