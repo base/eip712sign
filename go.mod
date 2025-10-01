@@ -6,7 +6,7 @@ toolchain go1.23.7
 
 require (
 	github.com/base/go-bip39 v1.1.0
-	github.com/base/usbwallet v0.1.0
+	github.com/base/usbwallet v0.1.1
 	github.com/decred/dcrd/hdkeychain/v3 v3.1.1
 	github.com/ethereum/go-ethereum v1.16.1
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
@@ -24,7 +24,6 @@ require (
 	github.com/ethereum/c-kzg-4844/v2 v2.1.0 // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
-	github.com/karalabe/usb v0.0.3-0.20231219215548-8627268f6b0a // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/nsf/termbox-go v0.0.0-20190325093121-288510b9734e // indirect
