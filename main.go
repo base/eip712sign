@@ -14,9 +14,9 @@ import (
 	"strings"
 
 	"github.com/base/go-bip39"
-	"github.com/base/usbwallet"
 	"github.com/decred/dcrd/hdkeychain/v3"
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
@@ -309,7 +309,7 @@ func (s *ecdsaSigner) close() error {
 }
 
 type walletSigner struct {
-	wallet  usbwallet.Wallet
+	wallet  accounts.Wallet
 	account accounts.Account
 }
 
@@ -326,7 +326,11 @@ func (s *walletSigner) signText(data []byte) ([]byte, error) {
 }
 
 func (s *walletSigner) signData(data apitypes.TypedData) ([]byte, error) {
-	return s.wallet.SignTypedData(s.account, data)
+	b, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	return s.wallet.SignData(s.account, accounts.MimetypeTypedData, b)
 }
 
 func (s *walletSigner) close() error {
