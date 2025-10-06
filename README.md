@@ -10,7 +10,7 @@ Small golang utility used to sign EIP-712 typed data or hashes, and EIP-191 pers
 <!-- Badge row 1 - status -->
 
 [![GitHub contributors](https://img.shields.io/github/contributors/base/eip712sign)](https://github.com/base/eip712sign/graphs/contributors)
-[![GitHub commit activity](https://img.shields.io/github/commit-activity/w/base/eip712sign)](https://github.com/base/eip712sign/graphs/contributors)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/w/base/eip712sign)](https://github.com/base/eip712sign/graphs/commit-activity)
 [![GitHub Stars](https://img.shields.io/github/stars/base/eip712sign.svg)](https://github.com/base/eip712sign/stargazers)
 ![GitHub repo size](https://img.shields.io/github/repo-size/base/eip712sign)
 [![GitHub](https://img.shields.io/github/license/base/eip712sign?color=blue)](https://github.com/base/eip712sign/blob/main/LICENSE)
