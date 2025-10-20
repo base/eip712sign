@@ -146,6 +146,10 @@ func main() {
 		fmt.Printf("Message hash: 0x%x\n", hashes[34:66])
 	}
 
+	if text && hasNonPrintableASCII(input) {
+		fmt.Printf("Input as ASCII: %s\n\n", formatRawBytes(input))
+	}
+
 	if signerErr != nil {
 		log.Fatalf("Error creating signer: %v", signerErr)
 	}
@@ -331,6 +335,43 @@ func (s *walletSigner) signData(data apitypes.TypedData) ([]byte, error) {
 
 func (s *walletSigner) close() error {
 	return s.wallet.Close()
+}
+
+func hasNonPrintableASCII(data []byte) bool {
+	for _, b := range data {
+		if b < 0x20 || b > 0x7E {
+			return true
+		}
+	}
+	return false
+}
+
+// formatRawBytes formats bytes as a string with printable ASCII shown as-is and
+// non-printable bytes shown as \xNN (without UTF-8 interpretation).
+func formatRawBytes(data []byte) string {
+	result := "\""
+	for _, b := range data {
+		if b >= 0x20 && b <= 0x7E && b != '"' && b != '\\' {
+			result += string(b)
+			continue
+		}
+		switch b {
+		case '\n':
+			result += "\\n"
+		case '\r':
+			result += "\\r"
+		case '\t':
+			result += "\\t"
+		case '\\':
+			result += "\\\\"
+		case '"':
+			result += "\\\""
+		default:
+			result += fmt.Sprintf("\\x%02x", b)
+		}
+	}
+	result += "\""
+	return result
 }
 
 func derivePrivateKey(mnemonic string, path accounts.DerivationPath) (*ecdsa.PrivateKey, error) {
