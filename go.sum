@@ -6,8 +6,8 @@ github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 h1:w1UutsfOrms1J05zt7I
 github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412/go.mod h1:WPjqKcmVOxf0XSf3YxCJs6N6AOSrOx3obionmG7T0y0=
 github.com/base/go-bip39 v1.1.0 h1:ely6zK09KaQbfX8wpcmN4pRXy0SbbqMT2QF45P1BNh0=
 github.com/base/go-bip39 v1.1.0/go.mod h1:grZZXX8gYycovDC4cLS/RS0DmctofwHN+MUhedYCbO0=
-github.com/base/usbwallet v0.1.1 h1:PMA5i+iqG/CWaOHVtZUO0ZMHd1aPOaovVA1yLuHa75k=
-github.com/base/usbwallet v0.1.1/go.mod h1:9ZDcr7QijjI7OHmjSCtbKZN/ZH4kzTN5BbIAm5H7qbc=
+github.com/base/usbwallet v0.1.2 h1:xKAd5oL0qEyuvsSaXanMwe8CDJZQoA0XZLlSzXDpNN4=
+github.com/base/usbwallet v0.1.2/go.mod h1:9ZDcr7QijjI7OHmjSCtbKZN/ZH4kzTN5BbIAm5H7qbc=
 github.com/bits-and-blooms/bitset v1.20.0 h1:2F+rfL86jE2d/bmw7OhqUg2Sj/1rURkBn3MdfoPyRVU=
 github.com/bits-and-blooms/bitset v1.20.0/go.mod h1:7hO7Gc7Pp1vODcmWvKMRA9BNmbv6a/7QIWpPxHddWR8=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
